@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eagle Word Tester</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans",sans-serif}
+    .kbd{border:1px solid rgb(203 213 225);border-bottom-width:3px;border-radius:.5rem;padding:.15rem .4rem}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="max-w-5xl mx-auto p-4 md:p-8">
+    <header class="flex items-center justify-between gap-4">
+      <h1 class="text-2xl md:text-3xl font-extrabold">🦅 Eagle Word Tester</h1>
+      <div class="text-xs text-slate-500">Loads <code>full_eagle_word.js</code> → <code>window.wordData</code></div>
+    </header>
+
+    <section class="mt-4 grid md:grid-cols-3 gap-3">
+      <div class="bg-white rounded-2xl shadow p-4 space-y-3">
+        <h2 class="font-bold">1) Pick list</h2>
+        <label class="block text-sm">Week
+          <select id="weekSel" class="mt-1 w-full rounded-xl border-slate-300">
+            <option value="">All weeks</option>
+          </select>
+        </label>
+        <label class="block text-sm">Section (story/type)
+          <select id="sectionSel" class="mt-1 w-full rounded-xl border-slate-300">
+            <option value="">All sections</option>
+          </select>
+        </label>
+        <label class="block text-sm">Limit (# words)
+          <input id="limitInput" type="number" min="1" placeholder="e.g. 20" class="mt-1 w-full rounded-xl border-slate-300" />
+        </label>
+        <button id="loadBtn" class="w-full rounded-2xl bg-slate-900 text-white py-2.5 font-semibold hover:bg-slate-800">Load words</button>
+        <div class="text-xs text-slate-500" id="poolInfo"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow p-4 space-y-3">
+        <h2 class="font-bold">2) Mode</h2>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <label class="flex items-center gap-2"><input type="radio" name="mode" value="spelling" checked> Spelling (type English)</label>
+          <label class="flex items-center gap-2"><input type="radio" name="mode" value="mc"> Multiple‑choice</label>
+          <label class="flex items-center gap-2"><input type="radio" name="mode" value="dictation"> Dictation (listen → type)</label>
+          <label class="flex items-center gap-2"><input type="radio" name="mode" value="flash"> Flashcards</label>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <label class="flex items-center gap-2"><input type="checkbox" id="shuffle" checked> Shuffle</label>
+          <label class="flex items-center gap-2"><input type="checkbox" id="hardFirst"> Review wrong first</label>
+        </div>
+        <div id="modeOptions" class="space-y-2 text-sm">
+          <label class="block">Prompt shows
+            <select id="promptSide" class="mt-1 w-full rounded-xl border-slate-300">
+              <option value="zh">中文 → 拼英⽂</option>
+              <option value="en">English → 答中文</option>
+            </select>
+          </label>
+          <label class="block">Tolerance (spelling)
+            <select id="tolerance" class="mt-1 w-full rounded-xl border-slate-300">
+              <option value="0">Strict (完全相同)</option>
+              <option value="1" selected>Lenient (差 1 字以內)</option>
+              <option value="2">Relaxed (差 2 字以內)</option>
+            </select>
+          </label>
+          <label class="block">Voice (dictation)
+            <select id="voiceSel" class="mt-1 w-full rounded-xl border-slate-300"></select>
+          </label>
+          <button id="startBtn" class="w-full rounded-2xl bg-emerald-600 text-white py-2.5 font-semibold hover:bg-emerald-500">Start!</button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow p-4 space-y-3">
+        <h2 class="font-bold">3) Session</h2>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="p-3 rounded-xl bg-slate-100"><div class="text-xs">Progress</div><div class="text-xl font-bold" id="progress">0/0</div></div>
+          <div class="p-3 rounded-xl bg-slate-100"><div class="text-xs">Score</div><div class="text-xl font-bold" id="score">0 ✅</div></div>
+        </div>
+        <div class="text-xs text-slate-500">Wrong words will be recycled later in the session. Your history is saved on this device.</div>
+        <button id="resetBtn" class="w-full rounded-2xl bg-rose-600 text-white py-2.5 font-semibold hover:bg-rose-500">Reset history for current pool</button>
+      </div>
+    </section>
+
+    <main id="card" class="mt-6 bg-white rounded-3xl shadow p-6 min-h-[260px] grid gap-3">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-slate-500" id="breadcrumb">—</div>
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+          <span class="kbd">Enter</span> submit <span class="kbd">Tab</span> next <span class="kbd">⌘/Ctrl</span> + <span class="kbd">.</span> hear
+        </div>
+      </div>
+      <div id="prompt" class="text-2xl md:text-3xl font-extrabold"></div>
+
+      <!-- Spelling / Dictation input -->
+      <div id="answerRow" class="flex items-center gap-2 flex-wrap">
+        <input id="answer" type="text" class="rounded-2xl border-slate-300 px-4 py-2 text-lg flex-1" placeholder="Type your answer…" autocomplete="off" />
+        <button id="speakBtn" class="rounded-2xl bg-indigo-600 text-white px-4 py-2 font-semibold hover:bg-indigo-500">🔊</button>
+        <button id="revealBtn" class="rounded-2xl bg-amber-500 text-white px-4 py-2 font-semibold hover:bg-amber-400">I don’t know</button>
+        <button id="submitBtn" class="rounded-2xl bg-slate-900 text-white px-4 py-2 font-semibold hover:bg-slate-800">Submit</button>
+      </div>
+
+      <!-- Multiple choice -->
+      <div id="mcRow" class="hidden grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+
+      <!-- Flashcard controls -->
+      <div id="flashRow" class="hidden flex items-center gap-2 flex-wrap">
+        <button id="flipBtn" class="rounded-2xl bg-slate-900 text-white px-4 py-2 font-semibold hover:bg-slate-800">Flip</button>
+        <button data-grade="0" class="gradeBtn rounded-2xl bg-rose-600 text-white px-4 py-2 font-semibold hover:bg-rose-500">Hard</button>
+        <button data-grade="1" class="gradeBtn rounded-2xl bg-amber-500 text-white px-4 py-2 font-semibold hover:bg-amber-400">So‑so</button>
+        <button data-grade="2" class="gradeBtn rounded-2xl bg-emerald-600 text-white px-4 py-2 font-semibold hover:bg-emerald-500">Easy</button>
+      </div>
+
+      <div id="feedback" class="text-lg"></div>
+    </main>
+
+    <footer class="mt-8 text-xs text-slate-500 flex items-center justify-between">
+      <div>Tip: In <b>Spelling</b> mode, you can choose 中文→英⽂ or English→中文. Dictation uses browser TTS.</div>
+      <div>© 2025 Eagle Words</div>
+    </footer>
+  </div>
+
+  <!-- Load your dataset (must set window.wordData) -->
+  <script src="./full_eagle_word.js"></script>
+  <script>
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+  function normalize(s){
+    return (s||"").toLowerCase().normalize('NFKC').replace(/[^a-z0-9\s\-']/g, '').replace(/\s+/g,' ').trim();
+  }
+  function lev(a,b){
+    a = normalize(a); b = normalize(b);
+    const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+    const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
+    for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j;
+    for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const c=a[i-1]===b[j-1]?0:1; dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+c);} }
+    return dp[m][n];
+  }
+  function speak(text){
+    if(!('speechSynthesis' in window)) return;
+    const u=new SpeechSynthesisUtterance(text);
+    const sel=$('#voiceSel'); const idx=sel&&sel.value?parseInt(sel.value,10):-1;
+    const voices=speechSynthesis.getVoices();
+    if(voices.length){ const pref=voices.filter(v=>/en(-|_)(US|GB)/i.test(v.lang)); if(idx>=0) u.voice=voices[idx]; else if(pref[0]) u.voice=pref[0]; }
+    u.rate=0.95; u.pitch=1.0; u.volume=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+  function pick(arr,k){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return typeof k==='number'?a.slice(0,k):a; }
+
+  const raw=(window.wordData||[]);
+  const flatWords=[];
+  for(const w of raw){ for(const s of (w.sections||[])){ for(const item of (s.words||[])){ flatWords.push({week:w.week,sectionType:s.type||'',story:s.story||'',en:item.en,zh:item.zh}); } } }
+
+  const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
+  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
+  const sectionSel=$('#sectionSel');
+  const sectionSet=[...new Set(flatWords.map(w=>`${w.sectionType} — ${w.story}`))].sort();
+  sectionSet.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sectionSel.appendChild(o); });
+
+  let pool=[], idx=0, correct=0, wrongBucket=[], mode='spelling', promptSide='zh', tol=1, key='';
+
+  function current(){ return pool[idx]; }
+  function updateHUD(){
+    document.getElementById('progress').textContent = `${Math.min(idx+1,pool.length)}/${pool.length}`;
+    document.getElementById('score').textContent = `${correct} ✅`;
+    const c=current(); document.getElementById('breadcrumb').textContent = c?`Week ${c.week} · ${c.sectionType}${c.story?(' · '+c.story):''}`:'—';
+  }
+  function showPrompt(){
+    const c=current(); if(!c) return;
+    document.getElementById('feedback').textContent=''; const ans=document.getElementById('answer'); ans.value=''; ans.classList.remove('ring-2','ring-rose-400','ring-emerald-400');
+    const side=promptSide; const prompt = side==='zh'? c.zh : c.en; document.getElementById('prompt').textContent = prompt||'(no text)';
+    const m=mode;
+    document.getElementById('answerRow').classList.toggle('hidden', !(m==='spelling'||m==='dictation'));
+    document.getElementById('mcRow').classList.toggle('hidden', m!=='mc');
+    document.getElementById('flashRow').classList.toggle('hidden', m!=='flash');
+    if(m==='dictation'){ speak(c.en); }
+    if(m==='mc'){
+      const answersPool = pool.length>4? pool : flatWords;
+      const opts = pick(answersPool.filter(x=>x.en!==c.en),3).concat([c]);
+      const shuffled = pick(opts);
+      const mcRow = document.getElementById('mcRow'); mcRow.innerHTML='';
+      shuffled.forEach(opt=>{
+        const btn=document.createElement('button');
+        btn.className='rounded-2xl border px-4 py-3 text-left hover:bg-slate-50';
+        btn.textContent = (promptSide==='zh') ? opt.en : opt.zh;
+        btn.onclick=()=>{ const isRight = opt.en===c.en; submit(isRight ? c.en : ''); };
+        mcRow.appendChild(btn);
+      });
+    }
+    if(m==='flash'){ document.getElementById('prompt').dataset.side = side; }
+    ans.focus();
+  }
+  function next(){
+    idx++;
+    if(idx>=pool.length){
+      if(wrongBucket.length){ pool=wrongBucket.slice(); wrongBucket=[]; idx=0; }
+      else{ document.getElementById('prompt').textContent='🎉 Finished! Great job!';
+            document.getElementById('answerRow').classList.add('hidden');
+            document.getElementById('mcRow').classList.add('hidden');
+            document.getElementById('flashRow').classList.add('hidden'); return; }
+    }
+    updateHUD(); showPrompt();
+  }
+  function saveHistory(){
+    try{ const id=key; const item={correct,total:pool.length,time:Date.now()};
+      const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); all[id]=item; localStorage.setItem('eagle_history', JSON.stringify(all)); }catch(e){}
+  }
+  function submit(typed){
+    const c=current(); const m=mode; let ok=false,targetText='';
+    if(m==='mc'){ ok=!!typed; targetText=c.en; }
+    else if(m==='flash'){ return; }
+    else{
+      if(promptSide==='zh'){ targetText=c.en; } else { targetText=c.zh; }
+      const answerText = (typed ?? document.getElementById('answer').value);
+      if(promptSide==='zh'){ ok = lev(answerText, targetText) <= tol; } else { ok = normalize(answerText)===normalize(targetText); }
+    }
+    const ans=document.getElementById('answer');
+    if(ok){
+      correct++; document.getElementById('feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Correct!</span> <span class="text-slate-500">${targetText}</span>`;
+      ans.classList.remove('ring-rose-400'); ans.classList.add('ring-2','ring-emerald-400'); saveHistory(); setTimeout(()=>next(),400);
+    }else{
+      wrongBucket.push(current()); document.getElementById('feedback').innerHTML = `<span class="text-rose-700 font-semibold">❌ Oops!</span> <span class="text-slate-500">Correct: <b>${targetText}</b></span>`;
+      ans.classList.remove('ring-emerald-400'); ans.classList.add('ring-2','ring-rose-400'); ans.focus();
+    }
+    updateHUD();
+  }
+
+  document.getElementById('loadBtn').onclick = () => {
+    const weekVal = document.getElementById('weekSel').value;
+    const secVal = document.getElementById('sectionSel').value;
+    let list = flatWords.slice();
+    if(weekVal) list = list.filter(w=>String(w.week)===weekVal);
+    if(secVal) list = list.filter(w=>`${w.sectionType} — ${w.story}`===secVal);
+    const limit = parseInt(document.getElementById('limitInput').value||'0',10);
+    if(limit>0) list = list.slice(0, limit);
+    if(document.getElementById('shuffle').checked) list = pick(list);
+    pool=list; correct=0; idx=0; wrongBucket=[];
+    key = `W${weekVal||'all'}|S${secVal||'all'}|N${limit||'all'}`;
+    document.getElementById('poolInfo').textContent = `${pool.length} words loaded.`;
+    updateHUD();
+  };
+  document.getElementById('startBtn').onclick = () => {
+    if(!pool.length){ document.getElementById('poolInfo').textContent='Please load words first.'; return; }
+    const selected = document.querySelector('input[name="mode"]:checked'); 
+    mode = selected ? selected.value : 'spelling';
+    promptSide = document.getElementById('promptSide').value;
+    tol = parseInt(document.getElementById('tolerance').value,10);
+    updateHUD(); showPrompt();
+  };
+  document.getElementById('submitBtn').onclick = ()=> submit();
+  document.getElementById('revealBtn').onclick = ()=>{
+    const c=current(); if(!c) return;
+    const ans = (promptSide==='zh')? c.en : c.zh;
+    document.getElementById('feedback').innerHTML = `<span class="text-amber-700 font-semibold">💡 Answer:</span> <b>${ans}</b>`;
+  };
+  document.getElementById('speakBtn').onclick = ()=>{ const c=current(); if(c) speak(c.en); };
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Enter') { e.preventDefault(); document.getElementById('submitBtn').click(); }
+    if(e.key==='Tab') { e.preventDefault(); next(); }
+    if((e.metaKey||e.ctrlKey) && e.key==='.') { const c=current(); if(c) speak(c.en); }
+  });
+  document.getElementById('flipBtn').onclick = ()=>{
+    const prompt = document.getElementById('prompt');
+    const c=current(); if(!c) return;
+    const now=prompt.dataset.side||'zh'; const nextSide=now==='zh'?'en':'zh';
+    prompt.dataset.side=nextSide; prompt.textContent = nextSide==='zh'? c.zh : c.en;
+  };
+  Array.from(document.getElementsByClassName('gradeBtn')).forEach(btn=> btn.addEventListener('click', ()=>{
+    const g=parseInt(btn.dataset.grade,10)||0;
+    if(g===2){} else if(g===1){ pool.splice(idx+3,0,current()); } else { pool.splice(idx+1,0,current()); }
+    correct += (g>0?1:0); next();
+  }));
+  document.getElementById('resetBtn').onclick = ()=>{
+    try{ const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); delete all[key]; localStorage.setItem('eagle_history', JSON.stringify(all)); document.getElementById('poolInfo').textContent='History reset for this pool.'; }catch(e){}
+  };
+  document.getElementById('poolInfo').textContent = 'Pick a week/section, then Load words → Start!';
+  </script>
+</body>
+</html>

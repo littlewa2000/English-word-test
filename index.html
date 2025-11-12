@@ -65,12 +65,15 @@
 
       <div class="bg-white rounded-2xl shadow p-4 space-y-3">
         <h2 class="font-bold">3) Session</h2>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <div class="p-3 rounded-xl bg-slate-100"><div class="text-xs">Progress</div><div class="text-xl font-bold" id="progress">0/0</div></div>
-          <div class="p-3 rounded-xl bg-slate-100"><div class="text-xs">Score</div><div class="text-xl font-bold" id="score">0 ✅</div></div>
+        <div class="grid grid-cols-1 gap-2 text-sm">
+          <div class="p-3 rounded-xl bg-slate-100">
+            <div class="text-xs">Accuracy</div>
+            <div class="text-xl font-bold" id="accuracy">0%</div>
+            <div class="text-xs text-slate-500" id="counts">0 correct · 0 wrong</div>
+          </div>
         </div>
         <div class="text-xs text-slate-500">Wrong words will be recycled later in the session. Your history is saved on this device.</div>
-        <button id="resetBtn" class="w-full rounded-2xl bg-rose-600 text-white py-2.5 font-semibold hover:bg-rose-500">Reset history for current pool</button>
+        <button id="resetBtn" class="w-full rounded-2xl bg-rose-600 text-white py-2.5 font-semibold hover:bg-rose-500">Reset history & score</button>
       </div>
     </section>
 
@@ -144,12 +147,14 @@
   const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
   const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
 
-  let pool=[], idx=0, correct=0, wrongBucket=[], mode='spelling', promptSide='zh', tol=1, key='';
+  let pool=[], idx=0, correct=0, attempts=0, wrongBucket=[], mode='spelling', promptSide='zh', tol=1, key='';
 
+  function accPct(){ return attempts ? Math.round((correct/attempts)*100) : 0; }
   function current(){ return pool[idx]; }
   function updateHUD(){
-    document.getElementById('progress').textContent = `${Math.min(idx+1,pool.length)}/${pool.length}`;
-    document.getElementById('score').textContent = `${correct} ✅`;
+    document.getElementById('accuracy').textContent = accPct() + '%';
+    const wrong = attempts - correct;
+    document.getElementById('counts').textContent = `${correct} correct · ${wrong} wrong`;
     const c=current(); document.getElementById('breadcrumb').textContent = c?`Week ${c.week}`:'—';
   }
   function buildPoolFromWeek(){
@@ -157,7 +162,7 @@
     let list = flatWords.slice();
     if(weekVal) list = list.filter(w=>String(w.week)===weekVal);
     if(document.getElementById('shuffle').checked) list = pick(list);
-    pool=list; correct=0; idx=0; wrongBucket=[];
+    pool=list; correct=0; attempts=0; idx=0; wrongBucket=[];
     key = `W${weekVal||'all'}|Sall|Nall`;
     updateHUD();
   }
@@ -198,7 +203,7 @@
     updateHUD(); showPrompt();
   }
   function saveHistory(){
-    try{ const id=key; const item={correct,total:pool.length,time:Date.now()};
+    try{ const id=key; const item={correct,totalAttempts:attempts,time:Date.now()};
       const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); all[id]=item; localStorage.setItem('eagle_history', JSON.stringify(all)); }catch(e){}
   }
   function submit(typed){
@@ -210,6 +215,7 @@
       const answerText = (typed ?? document.getElementById('answer').value);
       if(promptSide==='zh'){ ok = lev(answerText, targetText) <= tol; } else { ok = normalize(answerText)===normalize(targetText); }
     }
+    attempts++;
     const ans=document.getElementById('answer');
     if(ok){
       correct++; document.getElementById('feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Correct!</span> <span class="text-slate-500">${targetText}</span>`;
@@ -254,10 +260,12 @@
   Array.from(document.getElementsByClassName('gradeBtn')).forEach(btn=> btn.addEventListener('click', ()=>{
     const g=parseInt(btn.dataset.grade,10)||0;
     if(g===2){} else if(g===1){ pool.splice(idx+3,0,current()); } else { pool.splice(idx+1,0,current()); }
-    correct += (g>0?1:0); next();
+    correct += (g>0?1:0); attempts++; updateHUD(); next();
   }));
   document.getElementById('resetBtn').onclick = ()=>{
+    // Clear saved history for the current key and reset live counters
     try{ const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); delete all[key]; localStorage.setItem('eagle_history', JSON.stringify(all)); }catch(e){}
+    correct = 0; attempts = 0; updateHUD();
   };
   // Initialize pool for All weeks on first load
   buildPoolFromWeek();

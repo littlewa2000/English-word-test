@@ -28,7 +28,6 @@
             <option value="">All weeks</option>
           </select>
         </label>
-        <div class="text-xs text-slate-500" id="poolInfo"></div>
       </div>
 
       <div class="bg-white rounded-2xl shadow p-4 space-y-3">
@@ -116,7 +115,6 @@
   <script src="./full_eagle_word.js"></script>
   <script>
   const $ = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
 
   function normalize(s){
     return (s||"").toLowerCase().normalize('NFKC').replace(/[^a-z0-9\s\-']/g, '').replace(/\s+/g,' ').trim();
@@ -132,9 +130,9 @@
   function speak(text){
     if(!('speechSynthesis' in window)) return;
     const u=new SpeechSynthesisUtterance(text);
-    const sel=$('#voiceSel'); const idx=sel&&sel.value?parseInt(sel.value,10):-1;
     const voices=speechSynthesis.getVoices();
-    if(voices.length){ const pref=voices.filter(v=>/en(-|_)(US|GB)/i.test(v.lang)); if(idx>=0) u.voice=voices[idx]; else if(pref[0]) u.voice=pref[0]; }
+    const preferred = voices.find(v=>/en(-|_)(US|GB)/i.test(v.lang));
+    if(preferred) u.voice=preferred;
     u.rate=0.95; u.pitch=1.0; u.volume=1.0; speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
   function pick(arr,k){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return typeof k==='number'?a.slice(0,k):a; }
@@ -161,7 +159,6 @@
     if(document.getElementById('shuffle').checked) list = pick(list);
     pool=list; correct=0; idx=0; wrongBucket=[];
     key = `W${weekVal||'all'}|Sall|Nall`;
-    document.getElementById('poolInfo').textContent = `${pool.length} words ready.`;
     updateHUD();
   }
   function showPrompt(){
@@ -229,7 +226,7 @@
   // Start builds pool if empty, then runs
   document.getElementById('startBtn').onclick = () => {
     if(!pool.length) buildPoolFromWeek();
-    if(!pool.length){ document.getElementById('poolInfo').textContent='No words found for this selection.'; return; }
+    if(!pool.length){ return; }
     const selected = document.querySelector('input[name="mode"]:checked'); 
     mode = selected ? selected.value : 'spelling';
     promptSide = document.getElementById('promptSide').value;
@@ -260,7 +257,7 @@
     correct += (g>0?1:0); next();
   }));
   document.getElementById('resetBtn').onclick = ()=>{
-    try{ const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); delete all[key]; localStorage.setItem('eagle_history', JSON.stringify(all)); document.getElementById('poolInfo').textContent='History reset for this pool.'; }catch(e){}
+    try{ const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); delete all[key]; localStorage.setItem('eagle_history', JSON.stringify(all)); }catch(e){}
   };
   // Initialize pool for All weeks on first load
   buildPoolFromWeek();

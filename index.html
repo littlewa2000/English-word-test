@@ -28,12 +28,6 @@
             <option value="">All weeks</option>
           </select>
         </label>
-        <label class="block text-sm">Section
-          <select id="sectionSel" class="mt-1 w-full rounded-xl border-slate-300" disabled>
-            <option value="">All sections</option>
-          </select>
-        </label>
-        <button id="loadBtn" class="w-full rounded-2xl bg-slate-900 text-white py-2.5 font-semibold hover:bg-slate-800">Load words</button>
         <div class="text-xs text-slate-500" id="poolInfo"></div>
       </div>
 
@@ -105,7 +99,7 @@
       <div id="flashRow" class="hidden flex items-center gap-2 flex-wrap">
         <button id="flipBtn" class="rounded-2xl bg-slate-900 text-white px-4 py-2 font-semibold hover:bg-slate-800">Flip</button>
         <button data-grade="0" class="gradeBtn rounded-2xl bg-rose-600 text-white px-4 py-2 font-semibold hover:bg-rose-500">Hard</button>
-        <button data-grade="1" class="gradeBtn rounded-2xl bg-amber-500 text-white px-4 py-2 font-semibold hover:bg-amber-400">So‑so</button>
+        <button data-grade="1" class="gradeBtn rounded-2xl bg-amber-500 text-white px-4 py-2 font-semibold hover:bg-amber-400">So-so</button>
         <button data-grade="2" class="gradeBtn rounded-2xl bg-emerald-600 text-white px-4 py-2 font-semibold hover:bg-emerald-500">Easy</button>
       </div>
 
@@ -151,7 +145,6 @@
 
   const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
   const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
-  const sectionSel=$('#sectionSel'); sectionSel.innerHTML = '<option value="">All sections</option>';
 
   let pool=[], idx=0, correct=0, wrongBucket=[], mode='spelling', promptSide='zh', tol=1, key='';
 
@@ -159,7 +152,17 @@
   function updateHUD(){
     document.getElementById('progress').textContent = `${Math.min(idx+1,pool.length)}/${pool.length}`;
     document.getElementById('score').textContent = `${correct} ✅`;
-    const c=current(); document.getElementById('breadcrumb').textContent = c?`Week ${c.week} · ${c.sectionType}${c.story?(' · '+c.story):''}`:'—';
+    const c=current(); document.getElementById('breadcrumb').textContent = c?`Week ${c.week}`:'—';
+  }
+  function buildPoolFromWeek(){
+    const weekVal = document.getElementById('weekSel').value;
+    let list = flatWords.slice();
+    if(weekVal) list = list.filter(w=>String(w.week)===weekVal);
+    if(document.getElementById('shuffle').checked) list = pick(list);
+    pool=list; correct=0; idx=0; wrongBucket=[];
+    key = `W${weekVal||'all'}|Sall|Nall`;
+    document.getElementById('poolInfo').textContent = `${pool.length} words ready.`;
+    updateHUD();
   }
   function showPrompt(){
     const c=current(); if(!c) return;
@@ -221,18 +224,12 @@
     updateHUD();
   }
 
-  document.getElementById('loadBtn').onclick = () => {
-    const weekVal = document.getElementById('weekSel').value;
-    let list = flatWords.slice();
-    if(weekVal) list = list.filter(w=>String(w.week)===weekVal);
-    if(document.getElementById('shuffle').checked) list = pick(list);
-    pool=list; correct=0; idx=0; wrongBucket=[];
-    key = `W${weekVal||'all'}|Sall|Nall`;
-    document.getElementById('poolInfo').textContent = `${pool.length} words loaded.`;
-    updateHUD();
-  };
+  // Auto-load pool whenever week changes
+  document.getElementById('weekSel').addEventListener('change', buildPoolFromWeek);
+  // Start builds pool if empty, then runs
   document.getElementById('startBtn').onclick = () => {
-    if(!pool.length){ document.getElementById('poolInfo').textContent='Please load words first.'; return; }
+    if(!pool.length) buildPoolFromWeek();
+    if(!pool.length){ document.getElementById('poolInfo').textContent='No words found for this selection.'; return; }
     const selected = document.querySelector('input[name="mode"]:checked'); 
     mode = selected ? selected.value : 'spelling';
     promptSide = document.getElementById('promptSide').value;
@@ -265,7 +262,8 @@
   document.getElementById('resetBtn').onclick = ()=>{
     try{ const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); delete all[key]; localStorage.setItem('eagle_history', JSON.stringify(all)); document.getElementById('poolInfo').textContent='History reset for this pool.'; }catch(e){}
   };
-  document.getElementById('poolInfo').textContent = 'Pick a week (or All weeks), then Load words → Start!';
+  // Initialize pool for All weeks on first load
+  buildPoolFromWeek();
   </script>
 </body>
 </html>

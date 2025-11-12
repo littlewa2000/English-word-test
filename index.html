@@ -21,28 +21,26 @@
     </header>
 
     <section class="mt-4 grid md:grid-cols-3 gap-3">
-      <div class="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 class="font-bold">1) Pick list</h2>
-        <label class="block text-sm">Week
-          <select id="weekSel" class="mt-1 w-full rounded-xl border-slate-300">
-            <option value="">All weeks</option>
-          </select>
-        </label>
-      </div>
+      <!-- Left: Combined Setup -->
+      <div class="md:col-span-2 bg-white rounded-2xl shadow p-4 space-y-4">
+        <h2 class="font-bold">Setup</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="block text-sm md:col-span-1">Week
+            <select id="weekSel" class="mt-1 w-full rounded-xl border-slate-300">
+              <option value="">All weeks</option>
+            </select>
+          </label>
+          <label class="block text-sm md:col-span-2">Mode
+            <div class="mt-1 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+              <label class="flex items-center gap-2"><input type="radio" name="mode" value="spelling" checked> Spelling</label>
+              <label class="flex items-center gap-2"><input type="radio" name="mode" value="mc"> Multiple choice</label>
+              <label class="flex items-center gap-2"><input type="radio" name="mode" value="dictation"> Dictation</label>
+              <label class="flex items-center gap-2"><input type="radio" name="mode" value="flash"> Flashcards</label>
+            </div>
+          </label>
+        </div>
 
-      <div class="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 class="font-bold">2) Mode</h2>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <label class="flex items-center gap-2"><input type="radio" name="mode" value="spelling" checked> Spelling (type English)</label>
-          <label class="flex items-center gap-2"><input type="radio" name="mode" value="mc"> Multiple-choice</label>
-          <label class="flex items-center gap-2"><input type="radio" name="mode" value="dictation"> Dictation (listen → type)</label>
-          <label class="flex items-center gap-2"><input type="radio" name="mode" value="flash"> Flashcards</label>
-        </div>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <label class="flex items-center gap-2"><input type="checkbox" id="shuffle" checked> Shuffle</label>
-          <label class="flex items-center gap-2"><input type="checkbox" id="hardFirst"> Review wrong first</label>
-        </div>
-        <div id="modeOptions" class="space-y-2 text-sm">
+        <div class="grid md:grid-cols-3 gap-3 text-sm">
           <label class="block">Prompt shows
             <select id="promptSide" class="mt-1 w-full rounded-xl border-slate-300">
               <option value="zh">中文 → 拼英⽂</option>
@@ -59,12 +57,19 @@
           <label class="block">Voice (dictation)
             <select id="voiceSel" class="mt-1 w-full rounded-xl border-slate-300"></select>
           </label>
-          <button id="startBtn" class="w-full rounded-2xl bg-emerald-600 text-white py-2.5 font-semibold hover:bg-emerald-500">Start!</button>
         </div>
+
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <label class="flex items-center gap-2"><input type="checkbox" id="shuffle" checked> Shuffle</label>
+          <label class="flex items-center gap-2"><input type="checkbox" id="hardFirst"> Review wrong first</label>
+        </div>
+
+        <button id="startBtn" class="w-full rounded-2xl bg-emerald-600 text-white py-2.5 font-semibold hover:bg-emerald-500">Start!</button>
       </div>
 
+      <!-- Right: Session -->
       <div class="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 class="font-bold">3) Session</h2>
+        <h2 class="font-bold">Session</h2>
         <div class="grid grid-cols-1 gap-2 text-sm">
           <div class="p-3 rounded-xl bg-slate-100">
             <div class="text-xs">Accuracy</div>
@@ -238,7 +243,7 @@
       ans.classList.remove('ring-rose-400'); ans.classList.add('ring-2','ring-emerald-400'); saveHistory(); setTimeout(()=>next(),400);
     }else{
       wrong++; wrongBucket.push(current());
-      practiceMode=true; // NEW: require exact typing, but don't add to correct later
+      practiceMode=true;
       const show = (promptSide==='zh') ? c.en : c.zh;
       document.getElementById('feedback').innerHTML = `<span class="text-rose-700 font-semibold">❌ Oops!</span> <span class="text-slate-500">Correct: <b>${show}</b></span> — now type it exactly and press Submit.`;
       ans.classList.remove('ring-emerald-400'); ans.classList.add('ring-2','ring-rose-400'); ans.focus();

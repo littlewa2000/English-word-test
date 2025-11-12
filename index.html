@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Eagle Word Tester</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,78 +11,84 @@
   <style>
     *{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans",sans-serif}
     .kbd{border:1px solid rgb(203 213 225);border-bottom-width:3px;border-radius:.5rem;padding:.15rem .4rem}
+    .tab-btn[aria-selected="true"]{background:#0ea5e9;color:white}
+    .ios-safe{padding-bottom: env(safe-area-inset-bottom);}
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
-  <div class="max-w-5xl mx-auto p-4 md:p-8">
-    <header class="flex items-center justify-between gap-4">
-      <h1 class="text-2xl md:text-3xl font-extrabold">🦅 Eagle Word Tester</h1>
-      <div class="text-xs text-slate-500">Loads <code>full_eagle_word.js</code> → <code>window.wordData</code></div>
+  <div class="max-w-5xl mx-auto p-3 md:p-8">
+    <header class="flex items-center justify-between gap-4 mb-2 md:mb-4">
+      <h1 class="text-xl md:text-3xl font-extrabold">🦅 Eagle Word Tester</h1>
+      <div class="hidden md:block text-xs text-slate-500">Loads <code>full_eagle_word.js</code> → <code>window.wordData</code></div>
     </header>
 
-    <section class="mt-4 grid md:grid-cols-3 gap-3">
-      <!-- Left: Combined Setup -->
-      <div class="md:col-span-2 bg-white rounded-2xl shadow p-4 space-y-4">
-        <h2 class="font-bold">Setup</h2>
-        <div class="grid md:grid-cols-3 gap-3">
-          <label class="block text-sm md:col-span-1">Week
-            <select id="weekSel" class="mt-1 w-full rounded-xl border-slate-300">
-              <option value="">All weeks</option>
-            </select>
-          </label>
-          <label class="block text-sm md:col-span-2">Mode
-            <div class="mt-1 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-              <label class="flex items-center gap-2"><input type="radio" name="mode" value="spelling" checked> Spelling</label>
-              <label class="flex items-center gap-2"><input type="radio" name="mode" value="mc"> Multiple choice</label>
-              <label class="flex items-center gap-2"><input type="radio" name="mode" value="dictation"> Dictation</label>
-              <label class="flex items-center gap-2"><input type="radio" name="mode" value="flash"> Flashcards</label>
-            </div>
-          </label>
-        </div>
+    <!-- Tabs -->
+    <nav class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur ios-safe rounded-2xl p-1 flex gap-1 mb-3 md:mb-4">
+      <button class="tab-btn flex-1 rounded-xl py-2 text-sm font-semibold" data-tab="setup" aria-selected="true">Setup</button>
+      <button class="tab-btn flex-1 rounded-xl py-2 text-sm font-semibold" data-tab="session">Session</button>
+      <button class="tab-btn flex-1 rounded-xl py-2 text-sm font-semibold" data-tab="test">Test Area</button>
+    </nav>
 
-        <div class="grid md:grid-cols-3 gap-3 text-sm">
-          <label class="block">Prompt shows
-            <select id="promptSide" class="mt-1 w-full rounded-xl border-slate-300">
-              <option value="zh">中文 → 拼英⽂</option>
-              <option value="en">English → 答中文</option>
-            </select>
-          </label>
-          <label class="block">Tolerance (spelling)
-            <select id="tolerance" class="mt-1 w-full rounded-xl border-slate-300">
-              <option value="0">Strict (完全相同)</option>
-              <option value="1" selected>Lenient (差 1 字以內)</option>
-              <option value="2">Relaxed (差 2 字以內)</option>
-            </select>
-          </label>
-          <label class="block">Voice (dictation)
-            <select id="voiceSel" class="mt-1 w-full rounded-xl border-slate-300"></select>
-          </label>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <label class="flex items-center gap-2"><input type="checkbox" id="shuffle" checked> Shuffle</label>
-          <label class="flex items-center gap-2"><input type="checkbox" id="hardFirst"> Review wrong first</label>
-        </div>
-
-        <button id="startBtn" class="w-full rounded-2xl bg-emerald-600 text-white py-2.5 font-semibold hover:bg-emerald-500">Start!</button>
-      </div>
-
-      <!-- Right: Session -->
-      <div class="bg-white rounded-2xl shadow p-4 space-y-3">
-        <h2 class="font-bold">Session</h2>
-        <div class="grid grid-cols-1 gap-2 text-sm">
-          <div class="p-3 rounded-xl bg-slate-100">
-            <div class="text-xs">Accuracy</div>
-            <div class="text-xl font-bold" id="accuracy">0%</div>
-            <div class="text-xs text-slate-500" id="counts">0 correct · 0 wrong · 0 I don’t know</div>
+    <!-- Panels -->
+    <section id="panel-setup" class="tab-panel bg-white rounded-2xl shadow p-4 md:p-6 space-y-4">
+      <h2 class="font-bold text-lg">Setup</h2>
+      <div class="grid md:grid-cols-3 gap-3">
+        <label class="block text-sm md:col-span-1">Week
+          <select id="weekSel" class="mt-1 w-full rounded-xl border-slate-300">
+            <option value="">All weeks</option>
+          </select>
+        </label>
+        <label class="block text-sm md:col-span-2">Mode
+          <div class="mt-1 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+            <label class="flex items-center gap-2"><input type="radio" name="mode" value="spelling" checked> Spelling</label>
+            <label class="flex items-center gap-2"><input type="radio" name="mode" value="mc"> Multiple choice</label>
+            <label class="flex items-center gap-2"><input type="radio" name="mode" value="dictation"> Dictation</label>
+            <label class="flex items-center gap-2"><input type="radio" name="mode" value="flash"> Flashcards</label>
           </div>
-        </div>
-        <div class="text-xs text-slate-500">Wrong and “I don’t know” answers recycle later. Your history is saved on this device.</div>
-        <button id="resetBtn" class="w-full rounded-2xl bg-rose-600 text-white py-2.5 font-semibold hover:bg-rose-500">Reset history & score</button>
+        </label>
       </div>
+
+      <div class="grid md:grid-cols-3 gap-3 text-sm">
+        <label class="block">Prompt shows
+          <select id="promptSide" class="mt-1 w-full rounded-xl border-slate-300">
+            <option value="zh">中文 → 拼英⽂</option>
+            <option value="en">English → 答中文</option>
+          </select>
+        </label>
+        <label class="block">Tolerance (spelling)
+          <select id="tolerance" class="mt-1 w-full rounded-xl border-slate-300">
+            <option value="0">Strict (完全相同)</option>
+            <option value="1" selected>Lenient (差 1 字以內)</option>
+            <option value="2">Relaxed (差 2 字以內)</option>
+          </select>
+        </label>
+        <label class="block">Voice (dictation)
+          <select id="voiceSel" class="mt-1 w-full rounded-xl border-slate-300"></select>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        <label class="flex items-center gap-2"><input type="checkbox" id="shuffle" checked> Shuffle</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="hardFirst"> Review wrong first</label>
+      </div>
+
+      <button id="startBtn" class="w-full rounded-2xl bg-emerald-600 text-white py-3 font-semibold text-lg hover:bg-emerald-500">Start!</button>
     </section>
 
-    <main id="card" class="mt-6 bg-white rounded-3xl shadow p-6 min-h-[260px] grid gap-3">
+    <section id="panel-session" class="tab-panel hidden bg-white rounded-2xl shadow p-4 md:p-6 space-y-4">
+      <h2 class="font-bold text-lg">Session</h2>
+      <div class="grid grid-cols-1 gap-2 text-sm">
+        <div class="p-3 rounded-xl bg-slate-100">
+          <div class="text-xs">Accuracy</div>
+          <div class="text-xl font-bold" id="accuracy">0%</div>
+          <div class="text-xs text-slate-500" id="counts">0 correct · 0 wrong · 0 I don’t know</div>
+        </div>
+      </div>
+      <div class="text-xs text-slate-500">Wrong and “I don’t know” answers recycle later. Your history is saved on this device.</div>
+      <button id="resetBtn" class="w-full rounded-2xl bg-rose-600 text-white py-2.5 font-semibold hover:bg-rose-500">Reset history & score</button>
+    </section>
+
+    <section id="panel-test" class="tab-panel hidden bg-white rounded-2xl shadow p-4 md:p-6 space-y-3">
       <div class="flex items-center justify-between">
         <div class="text-sm text-slate-500" id="breadcrumb">—</div>
         <div class="flex items-center gap-2 text-xs text-slate-500">
@@ -111,9 +117,9 @@
       </div>
 
       <div id="feedback" class="text-lg"></div>
-    </main>
+    </section>
 
-    <footer class="mt-8 text-xs text-slate-500 flex items-center justify-between">
+    <footer class="mt-6 md:mt-8 text-xs text-slate-500 flex items-center justify-between">
       <div>Tip: In <b>Spelling</b> mode, you can choose 中文→英⽂ or English→中文. Dictation uses browser TTS.</div>
       <div>© 2025 Eagle Words</div>
     </footer>
@@ -122,7 +128,15 @@
   <!-- Load your dataset (must set window.wordData) -->
   <script src="./full_eagle_word.js"></script>
   <script>
+  // --- Helpers & tabs
   const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  function setTab(id){
+    $$('.tab-panel').forEach(p => p.classList.add('hidden'));
+    $(`#panel-${id}`).classList.remove('hidden');
+    $$('.tab-btn').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab===id)));
+  }
+  $$('.tab-btn').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 
   function normalize(s){
     return (s||"").toLowerCase().normalize('NFKC').replace(/[^a-z0-9\s\-']/g, '').replace(/\s+/g,' ').trim();
@@ -145,6 +159,7 @@
   }
   function pick(arr,k){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return typeof k==='number'?a.slice(0,k):a; }
 
+  // --- Dataset flatten
   const raw=(window.wordData||[]);
   const flatWords=[];
   for(const w of raw){ for(const s of (w.sections||[])){ for(const item of (s.words||[])){ flatWords.push({week:w.week,sectionType:s.type||'',story:s.story||'',en:item.en,zh:item.zh}); } } }
@@ -152,6 +167,7 @@
   const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
   const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
 
+  // --- State
   let pool=[], idx=0;
   let correct=0, wrong=0, idk=0;
   let wrongBucket=[], mode='spelling', promptSide='zh', tol=1, key='';
@@ -161,15 +177,15 @@
   function accPct(){ const a=attempts(); return a ? Math.round((correct/a)*100) : 0; }
   function current(){ return pool[idx]; }
   function updateHUD(){
-    document.getElementById('accuracy').textContent = accPct() + '%';
-    document.getElementById('counts').textContent = `${correct} correct · ${wrong} wrong · ${idk} I don’t know`;
-    const c=current(); document.getElementById('breadcrumb').textContent = c?`Week ${c.week}`:'—';
+    $('#accuracy').textContent = accPct() + '%';
+    $('#counts').textContent = `${correct} correct · ${wrong} wrong · ${idk} I don’t know`;
+    const c=current(); $('#breadcrumb').textContent = c?`Week ${c.week}`:'—';
   }
   function buildPoolFromWeek(){
-    const weekVal = document.getElementById('weekSel').value;
+    const weekVal = $('#weekSel').value;
     let list = flatWords.slice();
     if(weekVal) list = list.filter(w=>String(w.week)===weekVal);
-    if(document.getElementById('shuffle').checked) list = pick(list);
+    if($('#shuffle').checked) list = pick(list);
     pool=list; correct=0; wrong=0; idk=0; idx=0; wrongBucket=[]; practiceMode=false;
     key = `W${weekVal||'all'}|Sall|Nall`;
     updateHUD();
@@ -177,18 +193,18 @@
   function showPrompt(){
     const c=current(); if(!c) return;
     practiceMode=false;
-    document.getElementById('feedback').textContent=''; const ans=document.getElementById('answer'); ans.value=''; ans.classList.remove('ring-2','ring-rose-400','ring-emerald-400');
-    const side=promptSide; const prompt = side==='zh'? c.zh : c.en; document.getElementById('prompt').textContent = prompt||'(no text)';
+    $('#feedback').textContent=''; const ans=$('#answer'); ans.value=''; ans.classList.remove('ring-2','ring-rose-400','ring-emerald-400');
+    const side=promptSide; const prompt = side==='zh'? c.zh : c.en; $('#prompt').textContent = prompt||'(no text)';
     const m=mode;
-    document.getElementById('answerRow').classList.toggle('hidden', !(m==='spelling'||m==='dictation'));
-    document.getElementById('mcRow').classList.toggle('hidden', m!=='mc');
-    document.getElementById('flashRow').classList.toggle('hidden', m!=='flash');
+    $('#answerRow').classList.toggle('hidden', !(m==='spelling'||m==='dictation'));
+    $('#mcRow').classList.toggle('hidden', m!=='mc');
+    $('#flashRow').classList.toggle('hidden', m!=='flash');
     if(m==='dictation'){ speak(c.en); }
     if(m==='mc'){
       const answersPool = pool.length>4? pool : flatWords;
       const opts = pick(answersPool.filter(x=>x.en!==c.en),3).concat([c]);
       const shuffled = pick(opts);
-      const mcRow = document.getElementById('mcRow'); mcRow.innerHTML='';
+      const mcRow = $('#mcRow'); mcRow.innerHTML='';
       shuffled.forEach(opt=>{
         const btn=document.createElement('button');
         btn.className='rounded-2xl border px-4 py-3 text-left hover:bg-slate-50';
@@ -197,17 +213,17 @@
         mcRow.appendChild(btn);
       });
     }
-    if(m==='flash'){ document.getElementById('prompt').dataset.side = side; }
+    if(m==='flash'){ $('#prompt').dataset.side = side; }
     ans.focus();
   }
   function next(){
     idx++;
     if(idx>=pool.length){
       if(wrongBucket.length){ pool=wrongBucket.slice(); wrongBucket=[]; idx=0; }
-      else{ document.getElementById('prompt').textContent='🎉 Finished! Great job!';
-            document.getElementById('answerRow').classList.add('hidden');
-            document.getElementById('mcRow').classList.add('hidden');
-            document.getElementById('flashRow').classList.add('hidden'); return; }
+      else{ $('#prompt').textContent='🎉 Finished! Great job!';
+            $('#answerRow').classList.add('hidden');
+            $('#mcRow').classList.add('hidden');
+            $('#flashRow').classList.add('hidden'); return; }
     }
     updateHUD(); showPrompt();
   }
@@ -220,13 +236,13 @@
     if(!c) return;
     if(practiceMode){
       targetText = (promptSide==='zh') ? c.en : c.zh;
-      const answerText = (typed ?? document.getElementById('answer').value);
+      const answerText = (typed ?? $('#answer').value);
       const pass = (promptSide==='zh') ? (lev(answerText, targetText) === 0) : (normalize(answerText)===normalize(targetText));
       if(pass){
-        document.getElementById('feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Good practice!</span>`;
+        $('#feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Good practice!</span>`;
         practiceMode=false; setTimeout(()=>next(),300);
       }else{
-        document.getElementById('feedback').innerHTML = `<span class="text-amber-700 font-semibold">📝 Type exactly:</span> <b>${targetText}</b>`;
+        $('#feedback').innerHTML = `<span class="text-amber-700 font-semibold">📝 Type exactly:</span> <b>${targetText}</b>`;
       }
       return;
     }
@@ -234,67 +250,76 @@
     else if(m==='flash'){ return; }
     else{
       if(promptSide==='zh'){ targetText=c.en; } else { targetText=c.zh; }
-      const answerText = (typed ?? document.getElementById('answer').value);
+      const answerText = (typed ?? $('#answer').value);
       if(promptSide==='zh'){ ok = lev(answerText, targetText) <= tol; } else { ok = normalize(answerText)===normalize(targetText); }
     }
-    const ans=document.getElementById('answer');
+    const ans=$('#answer');
     if(ok){
-      correct++; document.getElementById('feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Correct!</span> <span class="text-slate-500">${targetText}</span>`;
+      correct++; $('#feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Correct!</span> <span class="text-slate-500">${targetText}</span>`;
       ans.classList.remove('ring-rose-400'); ans.classList.add('ring-2','ring-emerald-400'); saveHistory(); setTimeout(()=>next(),400);
     }else{
       wrong++; wrongBucket.push(current());
       practiceMode=true;
       const show = (promptSide==='zh') ? c.en : c.zh;
-      document.getElementById('feedback').innerHTML = `<span class="text-rose-700 font-semibold">❌ Oops!</span> <span class="text-slate-500">Correct: <b>${show}</b></span> — now type it exactly and press Submit.`;
+      $('#feedback').innerHTML = `<span class="text-rose-700 font-semibold">❌ Oops!</span> <span class="text-slate-500">Correct: <b>${show}</b></span> — now type it exactly and press Submit.`;
       ans.classList.remove('ring-emerald-400'); ans.classList.add('ring-2','ring-rose-400'); ans.focus();
     }
     updateHUD();
   }
 
-  // "I don't know" flow
-  document.getElementById('revealBtn').onclick = ()=>{
+  // IDK flow
+  $('#revealBtn').onclick = ()=>{
     const c=current(); if(!c) return;
     const ans = (promptSide==='zh')? c.en : c.zh;
     idk++; wrongBucket.push(c); practiceMode=true;
-    document.getElementById('feedback').innerHTML = `<span class="text-amber-700 font-semibold">💡 Answer:</span> <b>${ans}</b> — now type it exactly and press Submit.`;
+    $('#feedback').innerHTML = `<span class="text-amber-700 font-semibold">💡 Answer:</span> <b>${ans}</b> — now type it exactly and press Submit.`;
     updateHUD();
   };
 
-  // Auto-load pool whenever week changes
-  document.getElementById('weekSel').addEventListener('change', buildPoolFromWeek);
-  // Start builds pool if empty, then runs
-  document.getElementById('startBtn').onclick = () => {
+  // Change tab to 'test' on Start
+  function goTest(){ setTab('test'); }
+
+  // Build pool when week changes
+  $('#weekSel').addEventListener('change', buildPoolFromWeek);
+
+  // Start
+  $('#startBtn').onclick = () => {
     if(!pool.length) buildPoolFromWeek();
     if(!pool.length){ return; }
     const selected = document.querySelector('input[name="mode"]:checked'); 
     mode = selected ? selected.value : 'spelling';
-    promptSide = document.getElementById('promptSide').value;
-    tol = parseInt(document.getElementById('tolerance').value,10);
-    updateHUD(); showPrompt();
+    promptSide = $('#promptSide').value;
+    tol = parseInt($('#tolerance').value,10);
+    updateHUD(); showPrompt(); goTest();
   };
-  document.getElementById('submitBtn').onclick = ()=> submit();
-  document.getElementById('speakBtn').onclick = ()=>{ const c=current(); if(c) speak(c.en); };
+
+  // Buttons / keys
+  $('#submitBtn').onclick = ()=> submit();
+  $('#speakBtn').onclick = ()=>{ const c=current(); if(c) speak(c.en); };
   document.addEventListener('keydown', e=>{
-    if(e.key==='Enter') { e.preventDefault(); document.getElementById('submitBtn').click(); }
+    if(e.key==='Enter') { e.preventDefault(); $('#submitBtn').click(); }
     if(e.key==='Tab') { e.preventDefault(); next(); }
     if((e.metaKey||e.ctrlKey) && e.key=== '.') { const c=current(); if(c) speak(c.en); }
   });
-  document.getElementById('flipBtn').onclick = ()=>{
-    const prompt = document.getElementById('prompt');
+  $('#flipBtn')?.addEventListener('click', ()=>{
+    const prompt = $('#prompt');
     const c=current(); if(!c) return;
     const now=prompt.dataset.side||'zh'; const nextSide=now==='zh'?'en':'zh';
     prompt.dataset.side=nextSide; prompt.textContent = nextSide==='zh'? c.zh : c.en;
-  };
+  });
   Array.from(document.getElementsByClassName('gradeBtn')).forEach(btn=> btn.addEventListener('click', ()=>{
     const g=parseInt(btn.dataset.grade,10)||0;
     if(g===2){} else if(g===1){ pool.splice(idx+3,0,current()); } else { pool.splice(idx+1,0,current()); }
     correct += (g>0?1:0);
     updateHUD(); next();
   }));
-  document.getElementById('resetBtn').onclick = ()=>{
+  $('#resetBtn').onclick = ()=>{
     try{ const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); delete all[key]; localStorage.setItem('eagle_history', JSON.stringify(all)); }catch(e){}
     correct = 0; wrong = 0; idk = 0; updateHUD();
   };
+
+  // Initial
+  setTab('setup');
   buildPoolFromWeek();
   </script>
 </body>

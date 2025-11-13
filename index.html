@@ -165,7 +165,7 @@
   for(const w of raw){ for(const s of (w.sections||[])){ for(const item of (s.words||[])){ flatWords.push({week:w.week,sectionType:s.type||'',story:s.story||'',en:item.en,zh:item.zh}); } } }
 
   const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
-  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
+  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent = (w===20 ? 'Spelling Bee' : 'Week '+w); weekSel.appendChild(o); });
 
   // --- State
   let pool=[], idx=0;

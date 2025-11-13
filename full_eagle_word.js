@@ -3630,6 +3630,138 @@ const wordData = [
       }
     ]
   }
+,
+{
+  "week": 20,
+  "sections": [
+    {
+      "type": "Spelling Bee",
+      "story": "Grade 2A",
+      "words": [
+        { "en": "ace",        "zh": "王牌；高手" },
+        { "en": "actor",      "zh": "演員" },
+        { "en": "almond",     "zh": "杏仁" },
+        { "en": "alphabet",   "zh": "字母表" },
+        { "en": "amount",     "zh": "數量" },
+
+        { "en": "arrow",      "zh": "箭頭；箭" },
+        { "en": "article",    "zh": "文章；物品" },
+        { "en": "badger",     "zh": "獾；獾科動物" },
+        { "en": "barber",     "zh": "理髮師" },
+        { "en": "basic",      "zh": "基本的" },
+
+        { "en": "battle",     "zh": "戰鬥；戰役" },
+        { "en": "beginner",   "zh": "初學者" },
+        { "en": "blind",      "zh": "失明的；看不見的" },
+        { "en": "borrow",     "zh": "借入" },
+        { "en": "bother",     "zh": "打擾；麻煩" },
+
+        { "en": "cactus",     "zh": "仙人掌" },
+        { "en": "cartoon",    "zh": "卡通；動畫" },
+        { "en": "center",     "zh": "中心" },
+        { "en": "checkers",   "zh": "西洋跳棋" },
+        { "en": "chimney",    "zh": "煙囪" },
+
+        { "en": "claim",      "zh": "聲稱；要求" },
+        { "en": "clerk",      "zh": "店員；辦事員" },
+        { "en": "click",      "zh": "按一下；點擊" },
+        { "en": "cliff",      "zh": "懸崖" },
+        { "en": "clue",       "zh": "線索" },
+
+        { "en": "cocoon",     "zh": "蟲繭" },
+        { "en": "control",    "zh": "控制" },
+        { "en": "corner",     "zh": "角落" },
+        { "en": "cue",        "zh": "提示" },
+        { "en": "daydream",   "zh": "白日夢；做白日夢" },
+
+        { "en": "disk",       "zh": "磁片；圓盤" },
+        { "en": "drill",      "zh": "鑽孔；練習" },
+        { "en": "dust",       "zh": "灰塵；拂去灰塵" },
+        { "en": "enemy",      "zh": "敵人" },
+        { "en": "equal",      "zh": "相等的；平等的" },
+
+        { "en": "erase",      "zh": "擦掉；刪除" },
+        { "en": "example",    "zh": "例子" },
+        { "en": "field",      "zh": "田野；運動場；領域" },
+        { "en": "firefly",    "zh": "螢火蟲" },
+        { "en": "fireworks",  "zh": "煙火" },
+
+        { "en": "firm",       "zh": "堅固的；公司" },
+        { "en": "flash",      "zh": "閃光" },
+        { "en": "flight",     "zh": "飛行；班機" },
+        { "en": "fresh",      "zh": "新鮮的" },
+        { "en": "giant",      "zh": "巨人；巨大的" },
+
+        { "en": "grand",      "zh": "盛大的；壯觀的" },
+        { "en": "harbor",     "zh": "港口" },
+        { "en": "haunt",      "zh": "常出沒於；縈繞心頭" },
+        { "en": "history",    "zh": "歷史" },
+        { "en": "hungry",     "zh": "飢餓的" },
+
+        { "en": "iron",       "zh": "鐵；熨斗" },
+        { "en": "island",     "zh": "島；島嶼" },
+        { "en": "jellyfish",  "zh": "水母" },
+        { "en": "knight",     "zh": "騎士" },
+        { "en": "know-how",   "zh": "專業知識；本領" },
+
+        { "en": "ladybird",   "zh": "瓢蟲" },
+        { "en": "lighthouse", "zh": "燈塔" },
+        { "en": "lonely",     "zh": "寂寞的" },
+        { "en": "maple",      "zh": "楓樹" },
+        { "en": "meter",      "zh": "公尺；計量表" },
+
+        { "en": "middle",     "zh": "中間" },
+        { "en": "mole",       "zh": "鼴鼠；痣" },
+        { "en": "narrow",     "zh": "狹窄的" },
+        { "en": "offer",      "zh": "提供；提議" },
+        { "en": "onion",      "zh": "洋蔥" },
+
+        { "en": "period",     "zh": "期間；句號" },
+        { "en": "plain",      "zh": "平原；樸素的" },
+        { "en": "powerful",   "zh": "強大的" },
+        { "en": "pretend",    "zh": "假裝" },
+        { "en": "pride",      "zh": "驕傲；自豪" },
+
+        { "en": "recess",     "zh": "下課時間；休息" },
+        { "en": "record",     "zh": "紀錄；唱片" },
+        { "en": "result",     "zh": "結果" },
+        { "en": "rude",       "zh": "粗魯的" },
+        { "en": "season",     "zh": "季節" },
+
+        { "en": "settle",     "zh": "安頓；解決" },
+        { "en": "share",      "zh": "分享" },
+        { "en": "speech",     "zh": "演講；說話能力" },
+        { "en": "steak",      "zh": "牛排" },
+        { "en": "steel",      "zh": "鋼鐵" },
+
+        { "en": "Stone Age",  "zh": "石器時代" },
+        { "en": "strawberry", "zh": "草莓" },
+        { "en": "success",    "zh": "成功" },
+        { "en": "sundown",    "zh": "日落時分" },
+        { "en": "sunlit",     "zh": "陽光照耀的" },
+
+        { "en": "sunrise",    "zh": "日出" },
+        { "en": "supper",     "zh": "晚餐" },
+        { "en": "telephone",  "zh": "電話" },
+        { "en": "thirsty",    "zh": "口渴的" },
+        { "en": "thread",     "zh": "線；縫線" },
+
+        { "en": "toilet",     "zh": "廁所" },
+        { "en": "total",      "zh": "總數；全部的" },
+        { "en": "trash",      "zh": "垃圾" },
+        { "en": "value",      "zh": "價值" },
+        { "en": "vote",       "zh": "投票" },
+
+        { "en": "wasp",       "zh": "黃蜂" },
+        { "en": "wildcat",    "zh": "野貓；山貓" },
+        { "en": "willow",     "zh": "柳樹" },
+        { "en": "yourself",   "zh": "你自己" },
+        { "en": "youth",      "zh": "青春；年輕人" }
+      ]
+    }
+  ]
+}
+
 ];
 // Export for browser/Node
 if (typeof window !== 'undefined') window.wordData = wordData;

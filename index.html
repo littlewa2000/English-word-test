@@ -13,7 +13,32 @@
     .kbd{border:1px solid rgb(203 213 225);border-bottom-width:3px;border-radius:.5rem;padding:.15rem .4rem}
     .tab-btn[aria-selected="true"]{background:#0ea5e9;color:white}
     .ios-safe{padding-bottom: env(safe-area-inset-bottom);}
-  </style>
+  
+    /* responsive font sizing */
+:root {
+  font-size: 16px;
+}
+/* Extra-small phones (older / SE size) */
+@media (max-width: 360px) {
+  :root { font-size: 14px; }
+}
+/* Normal phones (most iPhones in portrait) */
+@media (min-width: 361px) and (max-width: 480px) {
+  :root { font-size: 15px; }
+}
+/* Tablets / small laptops */
+@media (min-width: 768px) and (max-width: 1199px) {
+  :root { font-size: 16px; }
+}
+/* Desktop / large screens */
+@media (min-width: 1200px) {
+  :root { font-size: 17px; }
+}
+/* Make main buttons scale with font size */
+button, .tab-btn {
+  font-size: 1rem;
+}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-900">
   <div class="max-w-5xl mx-auto p-3 md:p-8">
@@ -55,7 +80,6 @@
             <option value="en">English → 答中文</option>
           </select>
         </label>
-        
         <label class="block">Voice (dictation)
           <select id="voiceSel" class="mt-1 w-full rounded-xl border-slate-300"></select>
         </label>
@@ -159,7 +183,7 @@
   for(const w of raw){ for(const s of (w.sections||[])){ for(const item of (s.words||[])){ flatWords.push({week:w.week,sectionType:s.type||'',story:s.story||'',en:item.en,zh:item.zh}); } } }
 
   const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
-  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
+  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent = (w===20 ? 'Spelling Bee' : 'Week '+w); weekSel.appendChild(o); });
 
   // --- State
   let pool=[], idx=0;

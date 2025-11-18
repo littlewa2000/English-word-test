@@ -13,13 +13,33 @@
     .kbd{border:1px solid rgb(203 213 225);border-bottom-width:3px;border-radius:.5rem;padding:.15rem .4rem}
     .tab-btn[aria-selected="true"]{background:#0ea5e9;color:white}
     .ios-safe{padding-bottom: env(safe-area-inset-bottom);}
+  
+:root {
+  font-size: 16px;
+}
+@media (max-width: 360px) {
+  :root { font-size: 14px; }
+}
+@media (min-width: 361px) and (max-width: 480px) {
+  :root { font-size: 15px; }
+}
+@media (min-width: 768px) and (max-width: 1199px) {
+  :root { font-size: 16px; }
+}
+@media (min-width: 1200px) {
+  :root { font-size: 17px; }
+}
+button, .tab-btn {
+  font-size: 1rem;
+}
+
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
   <div class="max-w-5xl mx-auto p-3 md:p-8">
     <header class="flex items-center justify-between gap-4 mb-2 md:mb-4">
       <h1 class="text-xl md:text-3xl font-extrabold">🦅 Eagle Word Tester</h1>
-      <div class="hidden md:block text-xs text-slate-500">Loads <code>full_eagle_word.js</code> → <code>window.wordData</code></div>
+
     </header>
 
     <!-- Tabs -->
@@ -53,13 +73,6 @@
           <select id="promptSide" class="mt-1 w-full rounded-xl border-slate-300">
             <option value="zh">中文 → 拼英⽂</option>
             <option value="en">English → 答中文</option>
-          </select>
-        </label>
-        <label class="block">Tolerance (spelling)
-          <select id="tolerance" class="mt-1 w-full rounded-xl border-slate-300">
-            <option value="0">Strict (完全相同)</option>
-            <option value="1" selected>Lenient (差 1 字以內)</option>
-            <option value="2">Relaxed (差 2 字以內)</option>
           </select>
         </label>
         <label class="block">Voice (dictation)
@@ -120,7 +133,7 @@
     </section>
 
     <footer class="mt-6 md:mt-8 text-xs text-slate-500 flex items-center justify-between">
-      <div>Tip: In <b>Spelling</b> mode, you can choose 中文→英⽂ or English→中文. Dictation uses browser TTS.</div>
+      <div></div>
       <div>© 2025 Eagle Words</div>
     </footer>
   </div>
@@ -165,12 +178,12 @@
   for(const w of raw){ for(const s of (w.sections||[])){ for(const item of (s.words||[])){ flatWords.push({week:w.week,sectionType:s.type||'',story:s.story||'',en:item.en,zh:item.zh}); } } }
 
   const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
-  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
+  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent = (w===20 ? 'Spelling Bee' : 'Week '+w); weekSel.appendChild(o); });
 
   // --- State
   let pool=[], idx=0;
   let correct=0, wrong=0, idk=0;
-  let wrongBucket=[], mode='spelling', promptSide='zh', tol=1, key='';
+  let wrongBucket=[], mode='spelling', promptSide='zh', tol=0, key='';
   let practiceMode=false;
 
   function attempts(){ return correct + wrong + idk; }
@@ -289,7 +302,6 @@
     const selected = document.querySelector('input[name="mode"]:checked'); 
     mode = selected ? selected.value : 'spelling';
     promptSide = $('#promptSide').value;
-    tol = parseInt($('#tolerance').value,10);
     updateHUD(); showPrompt(); goTest();
   };
 

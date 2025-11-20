@@ -199,7 +199,14 @@
   for(const w of raw){ for(const s of (w.sections||[])){ for(const item of (s.words||[])){ flatWords.push({week:w.week,sectionType:s.type||'',story:s.story||'',en:item.en,zh:item.zh}); } } }
 
   const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
-  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
+  const weekSel=$('#weekSel'); 
+  weekSet.forEach(w=>{
+    const o=document.createElement('option');
+    o.value=String(w);
+    // Week 20 → label as "Spelling Bee 2025"
+    o.textContent = (w === 20 ? 'Spelling Bee 2025' : 'Week ' + w);
+    weekSel.appendChild(o);
+  });
 
   // --- State
   let pool=[], idx=0;
@@ -215,15 +222,29 @@
     $('#counts').textContent = `${correct} correct · ${wrong} wrong · ${idk} I don’t know`;
     const c=current(); $('#breadcrumb').textContent = c?`Week ${c.week}`:'—';
   }
+
+  // Build pool from week selection:
+  // If week = N → include weeks 1..N (cumulative)
   function buildPoolFromWeek(){
     const weekVal = $('#weekSel').value;
     let list = flatWords.slice();
-    if(weekVal) list = list.filter(w=>String(w.week)===weekVal);
+
+    if (weekVal) {
+      const maxWeek = parseInt(weekVal, 10);
+      if (!Number.isNaN(maxWeek)) {
+        // cumulative: week 1 ~ selected week
+        list = list.filter(w => Number(w.week) >= 1 && Number(w.week) <= maxWeek);
+      }
+    }
+
     if($('#shuffle').checked) list = pick(list);
     pool=list; correct=0; wrong=0; idk=0; idx=0; wrongBucket=[]; practiceMode=false;
-    key = `W${weekVal||'all'}|Sall|Nall`;
+
+    const keyWeekPart = weekVal ? `1-${weekVal}` : 'all';
+    key = `W${keyWeekPart}|Sall|Nall`;
     updateHUD();
   }
+
   function showPrompt(){
     const c=current(); if(!c) return;
     practiceMode=false;

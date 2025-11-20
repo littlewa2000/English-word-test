@@ -19,6 +19,7 @@
   <div class="max-w-5xl mx-auto p-3 md:p-8">
     <header class="flex items-center justify-between gap-4 mb-2 md:mb-4">
       <h1 class="text-xl md:text-3xl font-extrabold">🦅 Eagle Word Tester</h1>
+      <div class="hidden md:block text-xs text-slate-500">Loads <code>full_eagle_word.js</code> → <code>window.wordData</code></div>
     </header>
 
     <!-- Tabs -->
@@ -102,7 +103,7 @@
       </div>
       <div id="prompt" class="text-2xl md:text-3xl font-extrabold"></div>
 
-      <!-- Spelling / Dictation -->
+      <!-- Spelling / Dictation input -->
       <div id="answerRow" class="flex items-center gap-2 flex-wrap">
         <input id="answer" type="text" class="rounded-2xl border-slate-300 px-4 py-2 text-lg flex-1" placeholder="Type your answer…" autocomplete="off" />
         <button id="speakBtn" class="rounded-2xl bg-indigo-600 text-white px-4 py-2 font-semibold hover:bg-indigo-500">🔊</button>
@@ -110,10 +111,10 @@
         <button id="submitBtn" class="rounded-2xl bg-slate-900 text-white px-4 py-2 font-semibold hover:bg-slate-800">Submit</button>
       </div>
 
-      <!-- MC -->
+      <!-- Multiple choice -->
       <div id="mcRow" class="hidden grid grid-cols-1 md:grid-cols-2 gap-2"></div>
 
-      <!-- Flashcards -->
+      <!-- Flashcard controls -->
       <div id="flashRow" class="hidden flex items-center gap-2 flex-wrap">
         <button id="flipBtn" class="rounded-2xl bg-slate-900 text-white px-4 py-2 font-semibold hover:bg-slate-800">Flip</button>
         <button data-grade="0" class="gradeBtn rounded-2xl bg-rose-600 text-white px-4 py-2 font-semibold hover:bg-rose-500">Hard</button>
@@ -129,14 +130,231 @@
     </footer>
   </div>
 
+  <!-- Load your dataset (must set window.wordData) -->
   <script src="./full_eagle_word.js"></script>
   <script>
-  /* (JavaScript unchanged — includes cumulative week logic and removed header text) */
-  /* — FULL JS BLOCK —  */
-  /*  (Same as previous version I sent, only difference = no header text) */
+  // --- Helpers & tabs
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  function setTab(id){
+    $$('.tab-panel').forEach(p => p.classList.add('hidden'));
+    $(`#panel-${id}`).classList.remove('hidden');
+    $$('.tab-btn').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab===id)));
+  }
+  $$('.tab-btn').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 
-  /* [JS code exactly same as previous message — omitted here for chat readability] */
+  function normalize(s){
+    return (s||"").toLowerCase().normalize('NFKC').replace(/[^a-z0-9\s\-']/g, '').replace(/\s+/g,' ').trim();
+  }
+  function lev(a,b){
+    a = normalize(a); b = normalize(b);
+    const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+    const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
+    for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j;
+    for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const c=a[i-1]===b[j-1]?0:1; dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+c);} }
+    return dp[m][n];
+  }
+  function speak(text){
+    if(!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = speechSynthesis.getVoices() || [];
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
 
+    let preferred = null;
+
+    if (isIOS) {
+      // Prefer clearer female English voices on iOS if available
+      const preferredNames = ['Samantha', 'Karen', 'Moira', 'Serena'];
+      preferred = voices.find(v => /^en(-|_)/i.test(v.lang) && preferredNames.includes(v.name))
+               || voices.find(v => /^en(-|_)(US|GB)/i.test(v.lang));
+    } else {
+      // Desktop / Android – keep previous behavior
+      preferred = voices.find(v => /en(-|_)(US|GB)/i.test(v.lang));
+    }
+
+    if (preferred) {
+      u.voice = preferred;
+      u.lang = preferred.lang || 'en-US';
+    } else {
+      u.lang = 'en-US';
+    }
+
+    // Use slider value if available
+    const rateInput = document.getElementById('voiceRate');
+    let r = rateInput ? parseFloat(rateInput.value || '0.95') : 0.95;
+    if (!Number.isFinite(r) || r <= 0) r = 0.95;
+    u.rate = r;
+
+    u.pitch = 1.0;
+    u.volume = 1.0;
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+  function pick(arr,k){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return typeof k==='number'?a.slice(0,k):a; }
+
+  // --- Dataset flatten
+  const raw=(window.wordData||[]);
+  const flatWords=[];
+  for(const w of raw){ for(const s of (w.sections||[])){ for(const item of (s.words||[])){ flatWords.push({week:w.week,sectionType:s.type||'',story:s.story||'',en:item.en,zh:item.zh}); } } }
+
+  const weekSet=[...new Set(raw.map(r=>r.week))].sort((a,b)=>a-b);
+  const weekSel=$('#weekSel'); weekSet.forEach(w=>{ const o=document.createElement('option'); o.value=String(w); o.textContent='Week '+w; weekSel.appendChild(o); });
+
+  // --- State
+  let pool=[], idx=0;
+  let correct=0, wrong=0, idk=0;
+  let wrongBucket=[], mode='spelling', promptSide='zh', tol=1, key='';
+  let practiceMode=false;
+
+  function attempts(){ return correct + wrong + idk; }
+  function accPct(){ const a=attempts(); return a ? Math.round((correct/a)*100) : 0; }
+  function current(){ return pool[idx]; }
+  function updateHUD(){
+    $('#accuracy').textContent = accPct() + '%';
+    $('#counts').textContent = `${correct} correct · ${wrong} wrong · ${idk} I don’t know`;
+    const c=current(); $('#breadcrumb').textContent = c?`Week ${c.week}`:'—';
+  }
+  function buildPoolFromWeek(){
+    const weekVal = $('#weekSel').value;
+    let list = flatWords.slice();
+    if(weekVal) list = list.filter(w=>String(w.week)===weekVal);
+    if($('#shuffle').checked) list = pick(list);
+    pool=list; correct=0; wrong=0; idk=0; idx=0; wrongBucket=[]; practiceMode=false;
+    key = `W${weekVal||'all'}|Sall|Nall`;
+    updateHUD();
+  }
+  function showPrompt(){
+    const c=current(); if(!c) return;
+    practiceMode=false;
+    $('#feedback').textContent=''; const ans=$('#answer'); ans.value=''; ans.classList.remove('ring-2','ring-rose-400','ring-emerald-400');
+    const side=promptSide; const prompt = side==='zh'? c.zh : c.en; $('#prompt').textContent = prompt||'(no text)';
+    const m=mode;
+    $('#answerRow').classList.toggle('hidden', !(m==='spelling'||m==='dictation'));
+    $('#mcRow').classList.toggle('hidden', m!=='mc');
+    $('#flashRow').classList.toggle('hidden', m!=='flash');
+    if(m==='dictation'){ speak(c.en); }
+    if(m==='mc'){
+      const answersPool = pool.length>4? pool : flatWords;
+      const opts = pick(answersPool.filter(x=>x.en!==c.en),3).concat([c]);
+      const shuffled = pick(opts);
+      const mcRow = $('#mcRow'); mcRow.innerHTML='';
+      shuffled.forEach(opt=>{
+        const btn=document.createElement('button');
+        btn.className='rounded-2xl border px-4 py-3 text-left hover:bg-slate-50';
+        btn.textContent = (promptSide==='zh') ? opt.en : opt.zh;
+        btn.onclick=()=>{ const isRight = opt.en===c.en; submit(isRight ? c.en : ''); };
+        mcRow.appendChild(btn);
+      });
+    }
+    if(m==='flash'){ $('#prompt').dataset.side = side; }
+    ans.focus();
+  }
+  function next(){
+    idx++;
+    if(idx>=pool.length){
+      if(wrongBucket.length){ pool=wrongBucket.slice(); wrongBucket=[]; idx=0; }
+      else{ $('#prompt').textContent='🎉 Finished! Great job!';
+            $('#answerRow').classList.add('hidden');
+            $('#mcRow').classList.add('hidden');
+            $('#flashRow').classList.add('hidden'); return; }
+    }
+    updateHUD(); showPrompt();
+  }
+  function saveHistory(){
+    try{ const id=key; const item={correct, wrong, idk, time:Date.now()};
+      const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); all[id]=item; localStorage.setItem('eagle_history', JSON.stringify(all)); }catch(e){}
+  }
+  function submit(typed){
+    const c=current(); const m=mode; let ok=false,targetText='';
+    if(!c) return;
+    if(practiceMode){
+      targetText = (promptSide==='zh') ? c.en : c.zh;
+      const answerText = (typed ?? $('#answer').value);
+      const pass = (promptSide==='zh') ? (lev(answerText, targetText) === 0) : (normalize(answerText)===normalize(targetText));
+      if(pass){
+        $('#feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Good practice!</span>`;
+        practiceMode=false; setTimeout(()=>next(),300);
+      }else{
+        $('#feedback').innerHTML = `<span class="text-amber-700 font-semibold">📝 Type exactly:</span> <b>${targetText}</b>`;
+      }
+      return;
+    }
+    if(m==='mc'){ ok=!!typed; targetText=c.en; }
+    else if(m==='flash'){ return; }
+    else{
+      if(promptSide==='zh'){ targetText=c.en; } else { targetText=c.zh; }
+      const answerText = (typed ?? $('#answer').value);
+      if(promptSide==='zh'){ ok = lev(answerText, targetText) <= tol; } else { ok = normalize(answerText)===normalize(targetText); }
+    }
+    const ans=$('#answer');
+    if(ok){
+      correct++; $('#feedback').innerHTML = `<span class="text-emerald-700 font-semibold">✅ Correct!</span> <span class="text-slate-500">${targetText}</span>`;
+      ans.classList.remove('ring-rose-400'); ans.classList.add('ring-2','ring-emerald-400'); saveHistory(); setTimeout(()=>next(),400);
+    }else{
+      wrong++; wrongBucket.push(current());
+      practiceMode=true;
+      const show = (promptSide==='zh') ? c.en : c.zh;
+      $('#feedback').innerHTML = `<span class="text-rose-700 font-semibold">❌ Oops!</span> <span class="text-slate-500">Correct: <b>${show}</b></span> — now type it exactly and press Submit.`;
+      ans.classList.remove('ring-emerald-400'); ans.classList.add('ring-2','ring-rose-400'); ans.focus();
+    }
+    updateHUD();
+  }
+
+  // IDK flow
+  $('#revealBtn').onclick = ()=>{
+    const c=current(); if(!c) return;
+    const ans = (promptSide==='zh')? c.en : c.zh;
+    idk++; wrongBucket.push(c); practiceMode=true;
+    $('#feedback').innerHTML = `<span class="text-amber-700 font-semibold">💡 Answer:</span> <b>${ans}</b> — now type it exactly and press Submit.`;
+    updateHUD();
+  };
+
+  // Change tab to 'test' on Start
+  function goTest(){ setTab('test'); }
+
+  // Build pool when week changes
+  $('#weekSel').addEventListener('change', buildPoolFromWeek);
+
+  // Start
+  $('#startBtn').onclick = () => {
+    if(!pool.length) buildPoolFromWeek();
+    if(!pool.length){ return; }
+    const selected = document.querySelector('input[name="mode"]:checked'); 
+    mode = selected ? selected.value : 'spelling';
+    promptSide = $('#promptSide').value;
+    tol = parseInt($('#tolerance').value,10);
+    updateHUD(); showPrompt(); goTest();
+  };
+
+  // Buttons / keys
+  $('#submitBtn').onclick = ()=> submit();
+  $('#speakBtn').onclick = ()=>{ const c=current(); if(c) speak(c.en); };
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Enter') { e.preventDefault(); $('#submitBtn').click(); }
+    if(e.key==='Tab') { e.preventDefault(); next(); }
+    if((e.metaKey||e.ctrlKey) && e.key=== '.') { const c=current(); if(c) speak(c.en); }
+  });
+  $('#flipBtn')?.addEventListener('click', ()=>{
+    const prompt = $('#prompt');
+    const c=current(); if(!c) return;
+    const now=prompt.dataset.side||'zh'; const nextSide=now==='zh'?'en':'zh';
+    prompt.dataset.side=nextSide; prompt.textContent = nextSide==='zh'? c.zh : c.en;
+  });
+  Array.from(document.getElementsByClassName('gradeBtn')).forEach(btn=> btn.addEventListener('click', ()=>{
+    const g=parseInt(btn.dataset.grade,10)||0;
+    if(g===2){} else if(g===1){ pool.splice(idx+3,0,current()); } else { pool.splice(idx+1,0,current()); }
+    correct += (g>0?1:0);
+    updateHUD(); next();
+  }));
+  $('#resetBtn').onclick = ()=>{
+    try{ const all=JSON.parse(localStorage.getItem('eagle_history')||'{}'); delete all[key]; localStorage.setItem('eagle_history', JSON.stringify(all)); }catch(e){}
+    correct = 0; wrong = 0; idk = 0; updateHUD();
+  };
+
+  // Initial
+  setTab('setup');
+  buildPoolFromWeek();
   </script>
 </body>
 </html>

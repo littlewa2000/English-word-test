@@ -55,13 +55,6 @@
             <option value="en">English → 答中文</option>
           </select>
         </label>
-        <label class="block">Tolerance (spelling)
-          <select id="tolerance" class="mt-1 w-full rounded-xl border-slate-300">
-            <option value="0">Strict (完全相同)</option>
-            <option value="1" selected>Lenient (差 1 字以內)</option>
-            <option value="2">Relaxed (差 2 字以內)</option>
-          </select>
-        </label>
         <label class="block">Voice (dictation)
           <select id="voiceSel" class="mt-1 w-full rounded-xl border-slate-300"></select>
         </label>
@@ -323,7 +316,7 @@
     const selected = document.querySelector('input[name="mode"]:checked'); 
     mode = selected ? selected.value : 'spelling';
     promptSide = $('#promptSide').value;
-    tol = parseInt($('#tolerance').value,10);
+    tol = 0; // always strict spelling tolerance
     updateHUD(); showPrompt(); goTest();
   };
 
